@@ -17,6 +17,7 @@ class CategoryController extends Controller
     {
         $categories = Category::where('parent_id', null)->orderby('name', 'asc')->get();
         return $categories;
+        return "my name is osin";
 
         // $categories = Category::all();
         // return view('categories.index')->with(compact(['categories']));
