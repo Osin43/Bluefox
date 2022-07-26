@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Feedback;
+use App\Models\User;
+use App\Models\Order;
 use Illuminate\Http\Request;
 
 class FeedbackController extends Controller
@@ -14,7 +16,8 @@ class FeedbackController extends Controller
      */
     public function index()
     {
-        //
+        $feedbacks = Feedback::all();
+        return response()->json($feedbacks, 201);
     }
 
     /**
@@ -22,11 +25,37 @@ class FeedbackController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $validation)
     {
-        //
-    }
+        $validation->validate([
+            'feedback_desc' => 'required',
+            'user_id' => 'required',
+            'order_id' => 'required',
+            'feedback_desc' => 'required|min:1|max:500]'
+        ]);
 
+
+        $user = User::find($validation->user_id);
+        if (!$user) {
+            return response()->json(["message" => "User not found"], 404);
+        }
+
+
+        $order = Order::find($validation->order_id);
+        if (!$order) {
+            return response()->json(["message" => "Order not found"], 404);
+        }
+
+        $feedback = Feedback::create([
+            'user_id' => $validation->user_id,
+            'order_id' => $validation->order_id,
+            'title' => $validation->feedback_title,
+            'description' => $validation->feedback_desc,
+        ]);
+
+        return $feedback;
+        return response()->json(["message" => "Feedback sent successfully"]);
+    }
     /**
      * Store a newly created resource in storage.
      *
@@ -41,21 +70,21 @@ class FeedbackController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Feedback  $feedback
+     * @param  \App\Models\feedback  $feedback
      * @return \Illuminate\Http\Response
      */
-    public function show(Feedback $feedback)
+    public function show($id)
     {
-        //
     }
+
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Feedback  $feedback
+     * @param  \App\Models\feedback  $feedback
      * @return \Illuminate\Http\Response
      */
-    public function edit(Feedback $feedback)
+    public function edit(feedback $feedback)
     {
         //
     }
@@ -64,22 +93,45 @@ class FeedbackController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Feedback  $feedback
+     * @param  \App\Models\feedback  $feedback
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Feedback $feedback)
+    public function update(Request $validation, $id)
     {
-        //
-    }
 
+        $feedback = Feedback::find($id);
+        $feedback->feedback_desc = $validation ? $validation->name : $feedback->feedback_desc;
+
+        $feedback->update();
+        $errMessage = [
+            "status" => false,
+            "message" => "Update error"
+        ];
+        if (!$feedback) {
+            return response()->json($errMessage, 404);
+        }
+
+        $successMessage = [
+            "status" => true,
+            "message" => "Updated Successfully"
+        ];
+
+        return response()->json($successMessage, 201);
+    }
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Feedback  $feedback
+     * @param  \App\Models\feedback  $feedback
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Feedback $feedback)
+    public function destroy($id)
     {
-        //
+        $feedback = Feedback::find($id);
+        if (!$feedback) {
+            return response()->json(["message" => "Feedback not found"], 404);
+        }
+        $feedback->delete();
+        $successResponse = ["message" => "Feedback deleted successfully"];
+        return response()->json($successResponse, 200);
     }
-} 
+}
